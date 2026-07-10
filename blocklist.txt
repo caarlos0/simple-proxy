@@ -1,0 +1,3 @@
+# One hostname per line. Entries also block subdomains.
+# Use ASCII/Punycode for internationalized hostnames.
+# example.com
