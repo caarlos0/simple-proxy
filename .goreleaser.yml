@@ -5,7 +5,7 @@ version: 2
 project_name: simple-proxy
 
 metadata:
-  description: Simple HTTP Proxy
+  description: Simple HTTP proxy that follows a blocklist.txt
   homepage: "https://github.com/caarlos0/simple-proxy"
   license: MIT
   maintainers:
