@@ -271,14 +271,14 @@ func (p *proxy) tunnelHTTPS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "upstream connection failed", http.StatusBadGateway)
 		return
 	}
-	defer upstream.Close()
+	defer upstream.Close() //nolint:errcheck
 
 	client, buffered, err := hijacker.Hijack()
 	if err != nil {
 		p.logger.Error("hijack client connection", "error", err)
 		return
 	}
-	defer client.Close()
+	defer client.Close() //nolint:errcheck
 
 	if _, err := buffered.WriteString("HTTP/1.1 200 Connection Established\r\n\r\n"); err != nil {
 		p.logger.Warn("write CONNECT response", "error", err)

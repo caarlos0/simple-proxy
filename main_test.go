@@ -138,7 +138,7 @@ func TestProxyBlocksHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer response.Body.Close() //nolint:errcheck
 
 	if response.StatusCode != http.StatusForbidden {
 		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusForbidden)
@@ -279,7 +279,7 @@ func TestProxyBlocksCONNECT(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer response.Body.Close() //nolint:errcheck
 
 	if response.StatusCode != http.StatusForbidden {
 		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusForbidden)
