@@ -35,14 +35,16 @@ Example.COM.
 	}
 
 	tests := map[string]bool{
-		"example.com":         true,
-		"api.example.com":     true,
-		"notexample.com":      false,
-		"192.0.2.1":           true,
-		"192.000.002.001":     true,
-		"subdomain.192.0.2.1": false,
-		"0:0:0:0:0:0:0:1":     true,
-		"::ffff:192.0.2.1":    true,
+		"example.com":          true,
+		"api.example.com":      true,
+		"notexample.com":       false,
+		"192.0.2.1":            true,
+		"192.000.002.001":      true,
+		"subdomain.192.0.2.1":  false,
+		"0:0:0:0:0:0:0:1":      true,
+		"::ffff:192.0.2.1":     true,
+		"::1%lo0":              true,
+		"::ffff:192.0.2.1%lo0": true,
 	}
 	for host, want := range tests {
 		if got := blocklist.blocks(host); got != want {
@@ -287,6 +289,41 @@ func TestProxyBlocksCONNECT(t *testing.T) {
 	if !strings.Contains(logs.String(), "method=CONNECT") ||
 		!strings.Contains(logs.String(), "action=blocked") {
 		t.Fatalf("blocked CONNECT was not logged: %q", logs.String())
+	}
+}
+
+func TestProxyBlocksScopedIPv6CONNECT(t *testing.T) {
+	upstream, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = upstream.Close()
+	})
+	_, port, err := net.SplitHostPort(upstream.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	proxyServer, _ := startTestProxy(t, hostBlocklist{"::1": {}})
+	connection, err := net.Dial("tcp", proxyServer.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = connection.Close()
+	})
+	target := "[::1%25lo0]:" + port
+	if _, err := fmt.Fprintf(connection, "CONNECT %s HTTP/1.1\r\nHost: %s\r\n\r\n", target, target); err != nil {
+		t.Fatal(err)
+	}
+	response, err := http.ReadResponse(bufio.NewReader(connection), &http.Request{Method: http.MethodConnect})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close() //nolint:errcheck
+	if response.StatusCode != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", response.StatusCode, http.StatusForbidden)
 	}
 }
 
