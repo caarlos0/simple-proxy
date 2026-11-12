@@ -59,7 +59,7 @@ func normalizeHost(host string) string {
 
 func canonicalIP(host string) (string, bool) {
 	if address, err := netip.ParseAddr(host); err == nil {
-		return address.Unmap().String(), true
+		return address.WithZone("").Unmap().String(), true
 	}
 
 	parts := strings.Split(host, ".")
